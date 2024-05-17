@@ -6,3 +6,10 @@ export const getSignOnChain = async () => {
   const signOnChain = SignOnChain.attach(SignOnChainDeployment.address);
   return signOnChain;
 };
+
+export const getVerifynOnChain = async () => {
+  const VerifynOnChainDeployment = await deployments.get("VerifyOnChain");
+  const VerifynOnChain = await hre.ethers.getContractFactory("VerifyOnChain");
+  const verifynOnChain = VerifynOnChain.attach(VerifynOnChainDeployment.address);
+  return verifynOnChain;
+};

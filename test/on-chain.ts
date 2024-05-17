@@ -1,9 +1,11 @@
 import { arrayify } from "ethers/lib/utils";
 import { getSignOnChain } from "../src/utils/helper";
-import { ethers } from "hardhat";
+import { deployments, ethers } from "hardhat";
 
 describe("Test on-chain signer", async () => {
-  const setupTests = async () => {};
+  const setupTests = async () => {
+    await deployments.fixture();
+  };
   it("Can send a Native Token Transfer userOp", async () => {
     await setupTests();
     const contract = await getSignOnChain();
@@ -25,9 +27,7 @@ describe("Test on-chain signer", async () => {
       s: signature.s,
       v: signature.v.toNumber(),
     });
-
     console.log("etherSignature: ", etherSignature);
-
     const isValid = ethers.utils.verifyMessage(message, etherSignature);
     console.log(" expect address ", isValid);
     let resultVerifyOnchain;
