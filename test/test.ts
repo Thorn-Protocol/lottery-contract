@@ -32,16 +32,14 @@ const main = async () => {
     console.log(" expect address ", expectSigner);
 
     // TEST 1: claimDailyTicket
-    const resultVerifyOnchain = await contract.claimDailyTicket(deployer.address, deployer.address, timestamp, message, signature);
-    await contract.claimDailyTicket(deployer.address, deployer.address, timestamp, message, signature);
-    await contract.claimDailyTicket(deployer.address, deployer.address, timestamp, message, signature);
-    await contract.claimDailyTicket(deployer.address, deployer.address, timestamp, message, signature);
-    await contract.claimDailyTicket(deployer.address, deployer.address, timestamp, message, signature);
-    await contract.claimDailyTicket(deployer.address, deployer.address, timestamp, message, signature);
-    await contract.claimDailyTicket(deployer.address, deployer.address, timestamp, message, signature);
-    await contract.claimDailyTicket(deployer.address, deployer.address, timestamp, message, signature);
-    await contract.claimDailyTicket(deployer.address, deployer.address, timestamp, message, signature);
-    await contract.claimDailyTicket(deployer.address, deployer.address, timestamp, message, signature);
+    const resultVerifyOnchain = await contract.claimDailyTicket(deployer.address, timestamp, message, signature);
+    await contract.claimDailyTicket(deployer.address, timestamp, message, signature);
+    await contract.claimDailyTicket(deployer.address, timestamp, message, signature);
+    await contract.claimDailyTicket(deployer.address, timestamp, message, signature);
+    await contract.claimDailyTicket(deployer.address, timestamp, message, signature);
+    await contract.claimDailyTicket(deployer.address, timestamp, message, signature);
+    await contract.claimDailyTicket(deployer.address, timestamp, message, signature);
+    await contract.claimDailyTicket(deployer.address, timestamp, message, signature);
     // const result = await resultVerifyOnchain.wait();
     // // console.log("Result verify on chain: ", result);
 
@@ -50,7 +48,7 @@ const main = async () => {
     const owner = await contract.owner();
     console.log("owner: ", owner);
     console.log(deployer.address)
-    const resultRollLuckyTicket = await contract.connect(deployer).rollLuckyTickets();
+    let resultRollLuckyTicket = await contract.connect(deployer).rollLuckyTickets();
     console.log("Result roll lucky ticket: ", resultRollLuckyTicket);
 
     // TEST 3: getTotalLuckyNumbersByRound
@@ -59,7 +57,7 @@ const main = async () => {
 
     // TEST 4: checkUserClaimDailyTicket
     const checkUserClaimDailyTicket = await contract.checkUserClaimDailyTicket(deployer.address);
-    // console.log("User claimed daily ticket: ", checkUserClaimDailyTicket);
+    console.log("User claimed daily ticket: ", checkUserClaimDailyTicket);
 
     // TEST 5: getTotalAttendeeByRound
     const totalAttendee = await contract.getTotalAttendeeByRound(0);
@@ -68,6 +66,18 @@ const main = async () => {
     // TEST 6: getUserInfo
     const userInfo = await contract.getUserInfo(deployer.address);
     console.log("User info: ", userInfo);
+
+    // TEST 7: setNumberRewardsOfRound
+    const resultSetNumberRewardsOfRound = await contract.setNumberRewardsOfRound(4);
+    console.log("Result set number rewards of round: ", resultSetNumberRewardsOfRound);
+    resultRollLuckyTicket = await contract.connect(deployer).rollLuckyTickets();
+    console.log("Result roll lucky ticket: ", resultRollLuckyTicket);
+
+    // TEST 8: setNumberOfRounds
+    const resultSetNumberOfRounds = await contract.setNumberOfRounds(7);
+    console.log("Result set number of rounds: ", resultSetNumberOfRounds);
+
+
 }
 
 main()

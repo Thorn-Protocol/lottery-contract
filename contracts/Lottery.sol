@@ -108,7 +108,7 @@ contract Lottery is Ownable {
     ) public returns (uint) {
         // bytes32 dataHash = getHash(userAddress, timestamp);
 
-        // require (checkUserClaimDailyTicket(userAddress) == false, "User already claimed ticket today");
+        require (checkUserClaimDailyTicket(userAddress) == false, "User already claimed ticket today");
 
         address recovered = (dataHash.toEthSignedMessageHash()).recover(
             signature
@@ -123,7 +123,7 @@ contract Lottery is Ownable {
         }
         console.log("(Contract) Signer: %s", recovered);
         console.log("(Contract) Admin: %s", adminAddress);
-        // require(verified == true, "Invalid ticket: signer is not admin");
+        require(verified == true, "Invalid ticket: signer is not admin");
 
         // check timestamp on ticket
         console.log(timestamp);
