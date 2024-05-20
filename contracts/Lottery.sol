@@ -11,6 +11,13 @@ import {SignatureRSV, EthereumUtils} from "@oasisprotocol/sapphire-contracts/con
 import "hardhat/console.sol";
 
 contract Lottery is Ownable {
+    struct LotteryInformation {
+        uint epochTime;
+        uint numberRewardsOfRound;
+        uint totalRounds;
+        uint rewards;
+    }
+
     struct LuckyTicket {
         uint luckyNumber;
         uint round;
@@ -31,6 +38,7 @@ contract Lottery is Ownable {
     uint numberRewardsOfRound;
     uint rewards;
     uint randNonce = 0;
+    LotteryInformation lotteryInformation;
 
     event eventClaimDailyTicket(
         address userAddress,
@@ -60,6 +68,7 @@ contract Lottery is Ownable {
         adminAddress = msg.sender;
         numberRewardsOfRound = 5;
         rewards = 50;
+        lotteryInformation = LotteryInformation(epochTime, numberRewardsOfRound, totalRounds, rewards);
     }
 
     modifier onlyAdmin() {
@@ -177,12 +186,12 @@ contract Lottery is Ownable {
         uint8 iteration = 0;
         uint mod = ticketCountByRound[round];
         while (count < numberRewardsOfRound && iteration < 20) {
-            // get random bytes
-            bytes memory rand = Sapphire.randomBytes(32, "");
-            uint luckyNumber = bytesToUint(rand);
+            // // get random bytes
+            // bytes memory rand = Sapphire.randomBytes(32, "");
+            // uint luckyNumber = bytesToUint(rand);
 
-            // // mock random generator
-            // uint luckyNumber = randMod();
+            // mock random generator
+            uint luckyNumber = randMod();
 
             luckyNumber = luckyNumber % mod;
             bool skip = false;
@@ -217,45 +226,49 @@ contract Lottery is Ownable {
         return luckyNumbers;
     }
 
-    function getTotalRewards() public view returns (uint) {
-        return rewards;
+    enum PARAMETER {
+        EPOCH_TIME,
+        NUMBER_REWARDS_OF_ROUND,
+        TOTAL_ROUNDS,
+        REWARDS
     }
 
-    function setTotalRewards(uint _rewards) public onlyAdmin {
-        rewards = _rewards;
-    }
-
-    function getNumberRewardsOfRound() public view returns (uint) {
-        return numberRewardsOfRound;
-    }
-
-    function setNumberRewardsOfRound(
-        uint _numberRewardsOfRound
-    ) public onlyAdmin {
-        numberRewardsOfRound = _numberRewardsOfRound;
-    }
-
-    function getNumberOfRounds() public view returns (uint) {
-        return totalRounds;
-    }
-
-    function setNumberOfRounds(uint _totalRounds) public onlyAdmin {
-        totalRounds = _totalRounds;
-        // assign new array
-        uint[] memory newTicketCountByRound = new uint[](totalRounds);
-        if (totalRounds > ticketCountByRound.length) {
+    function setLottery(PARAMETER _parameter, uint _input) public onlyAdmin
+ {
+        if (_parameter == PARAMETER.EPOCH_TIME) {
+            lotteryInformation.epochTime = _input;
+        } else if (_parameter == PARAMETER.NUMBER_REWARDS_OF_ROUND) {
+            lotteryInformation.numberRewardsOfRound = _input;
+        } else if (_parameter == PARAMETER.TOTAL_ROUNDS) {
+            lotteryInformation.totalRounds = _input;
+            // assign new array
+            uint[] memory newTicketCountByRound = new uint[](totalRounds);
+            if (totalRounds > ticketCountByRound.length) {
+                for (uint i = 0; i < ticketCountByRound.length; i++) {
+                    newTicketCountByRound[i] = ticketCountByRound[i];
+                }
+            } else {
+                for (uint i = 0; i < totalRounds; i++) {
+                    newTicketCountByRound[i] = ticketCountByRound[i];
+                }
+            }
+            ticketCountByRound = newTicketCountByRound;
             for (uint i = 0; i < ticketCountByRound.length; i++) {
-                newTicketCountByRound[i] = ticketCountByRound[i];
+                console.log("Ticket count by round: %s", ticketCountByRound[i]);
             }
-        } else {
-            for (uint i = 0; i < totalRounds; i++) {
-                newTicketCountByRound[i] = ticketCountByRound[i];
-            }
+        } else if (_parameter == PARAMETER.REWARDS) {
+            rewards = _input;
         }
-        ticketCountByRound = newTicketCountByRound;
-        for (uint i = 0; i < ticketCountByRound.length; i++) {
-            console.log("Ticket count by round: %s", ticketCountByRound[i]);
-        }
+        console.log("New lottery");
+        console.log("Epoch time: %s", lotteryInformation.epochTime);
+        console.log("Number rewards of round: %s", lotteryInformation.numberRewardsOfRound);
+        console.log("Total rounds: %s", lotteryInformation.totalRounds);
+        console.log("Rewards: %s", lotteryInformation.rewards);
+
+    }
+
+    function getLottery() public view returns (LotteryInformation memory) {
+        return LotteryInformation(epochTime, numberRewardsOfRound, totalRounds, rewards);
     }
 
     function getRollLuckyTicketsTime() public view returns (uint) {

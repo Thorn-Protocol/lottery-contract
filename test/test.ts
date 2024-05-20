@@ -67,17 +67,19 @@ const main = async () => {
     const userInfo = await contract.getUserInfo(deployer.address);
     console.log("User info: ", userInfo);
 
-    // TEST 7: setNumberRewardsOfRound
-    const resultSetNumberRewardsOfRound = await contract.setNumberRewardsOfRound(4);
-    console.log("Result set number rewards of round: ", resultSetNumberRewardsOfRound);
-    resultRollLuckyTicket = await contract.connect(deployer).rollLuckyTickets();
-    console.log("Result roll lucky ticket: ", resultRollLuckyTicket);
+    // // TEST 7: setNumberRewardsOfRound
+    // const resultSetNumberRewardsOfRound = await contract.setNumberRewardsOfRound(4);
+    // console.log("Result set number rewards of round: ", resultSetNumberRewardsOfRound);
+    // resultRollLuckyTicket = await contract.connect(deployer).rollLuckyTickets();
+    // console.log("Result roll lucky ticket: ", resultRollLuckyTicket);
 
-    // TEST 8: setNumberOfRounds
-    const resultSetNumberOfRounds = await contract.setNumberOfRounds(7);
-    console.log("Result set number of rounds: ", resultSetNumberOfRounds);
+    // // TEST 8: setNumberOfRounds
+    // const resultSetNumberOfRounds = await contract.setNumberOfRounds(7);
+    // console.log("Result set number of rounds: ", resultSetNumberOfRounds);
 
-
+    // TEST 9: setLottery
+    const newLottery = await contract.setLottery(0, 1234567890);
+    console.log("New lottery: ", newLottery);
 }
 
 main()
