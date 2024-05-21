@@ -343,6 +343,9 @@ contract Lottery is Ownable {
         numberTicketClaimed = userLuckyNumber[userAddress].length;
         numberWinnings = winnings[userAddress].length;
         // latest ticket claimed
+        if (numberTicketClaimed == 0) {
+            return (0, 0, 0);
+        }
         latestTicketClaimTime = dailyTicketsByUser[userAddress][
             userLuckyNumber[userAddress][numberTicketClaimed - 1]
         ].timestamp;
