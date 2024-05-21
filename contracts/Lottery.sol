@@ -203,7 +203,6 @@ contract Lottery is Ownable {
         bytes32 dataHash,
         bytes memory signature
     ) public returns (uint) {
-
         require(
             checkUserClaimDailyTicket(userAddress) == false,
             "User already claimed ticket today"
@@ -248,6 +247,8 @@ contract Lottery is Ownable {
         );
         dailyTicketsByUser[userAddress][luckyNumber] = ticket;
         dailyTickets[luckyNumber] = ticket;
+        // console.log("XXXXXXXXXXXXXX");
+        // console.log(dailyTickets[luckyNumber].timestamp);
         userLuckyNumber[userAddress].push(luckyNumber);
         console.log("Ticket counter: %s", luckyNumber);
 
@@ -302,6 +303,15 @@ contract Lottery is Ownable {
     ) public view returns (LuckyTicket[] memory) {
         if (roundReward[round].length > 0) return roundReward[round];
         return new LuckyTicket[](0);
+    }
+    function getTotalTicketsByRound(
+        uint round
+    ) public view returns (LuckyTicket[] memory) {
+        LuckyTicket[] memory tickets = new LuckyTicket[](ticketCountByRound[round]);
+        for (uint i = 0; i < ticketCountByRound[round]; i++) {
+            tickets[i] = dailyTickets[i+1];
+        }
+        return tickets;
     }
 
     function checkUserClaimDailyTicket(
