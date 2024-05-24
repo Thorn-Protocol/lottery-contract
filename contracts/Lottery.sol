@@ -11,13 +11,19 @@ import {SignatureRSV, EthereumUtils} from "@oasisprotocol/sapphire-contracts/con
 import "hardhat/console.sol";
 
 contract Lottery is Ownable {
+    using ECDSA for bytes32;
+    using Sapphire for bytes;
+
     struct LotteryInformation {
         uint epochTime;
         uint numberRewardsOfRound;
         uint totalRounds;
         uint rewards;
+        // update when round is rolled
         uint currentRound;
+        // rollTicketTime: relative time to start of day
         uint rollTicketTime;
+        // claimTicketTime: relative time to prev round roll time
         uint claimTicketTime;
     }
 
@@ -36,6 +42,8 @@ contract Lottery is Ownable {
     mapping(uint => uint) ticketCountByRound;
     mapping(address => bool) public isAdmin;
     uint randNonce = 0;
+    // timestamp of day start of latest roll
+    uint latestRollTime;
     LotteryInformation public lotteryInformation;
 
     event eventClaimDailyTicket(
@@ -46,6 +54,7 @@ contract Lottery is Ownable {
         uint luckyNumber
     );
     event rollLuckyTicketsEvent(uint256[] luckyNumbers, uint round);
+    event setLotteryEvent(LotteryInformation lotteryInformation);
 
     modifier onlyAdmin() {
         require(isAdmin[msg.sender], "Only admin can call this function");
@@ -63,10 +72,8 @@ contract Lottery is Ownable {
             11 * 3600 + 30 * 60,
             0
         );
+        latestRollTime = 0;
     }
-
-    using ECDSA for bytes32;
-    using Sapphire for bytes;
 
     function setAdmin(address _newAdmin) public onlyOwner {
         isAdmin[_newAdmin] = true;
@@ -79,12 +86,18 @@ contract Lottery is Ownable {
 
     // admin function
     function rollLuckyTickets() public onlyAdmin returns (uint[] memory) {
-        uint round = lotteryInformation.currentRound;
+        uint round = getRound();
         require(roundReward[round].length == 0, "Round already rolled");
+        require(
+            latestRollTime - lotteryInformation.rollTicketTime < block.timestamp - (block.timestamp % 86400),
+            "Already rolled today"
+        );
         require(
             block.timestamp >= getRollLuckyTicketsTime(),
             "Not roll time yet"
         );
+
+        uint mod = ticketCountByRound[round];
         uint numberRewardsOfRound = lotteryInformation.numberRewardsOfRound;
         require(
             ticketCountByRound[round] > numberRewardsOfRound,
@@ -94,14 +107,13 @@ contract Lottery is Ownable {
         uint[] memory luckyNumbers = new uint[](numberRewardsOfRound);
         uint8 count = 0;
         uint8 iteration = 0;
-        uint mod = ticketCountByRound[round];
         while (count < numberRewardsOfRound && iteration < 20) {
-            // get random bytes
-            bytes memory rand = Sapphire.randomBytes(32, "");
-            uint luckyNumber = bytesToUint(rand);
+            // // get random bytes
+            // bytes memory rand = Sapphire.randomBytes(32, "");
+            // uint luckyNumber = bytesToUint(rand);
 
-            // // mock random generator
-            // uint luckyNumber = randMod();
+            // mock random generator
+            uint luckyNumber = randMod();
 
             luckyNumber = luckyNumber % mod;
             bool skip = false;
@@ -128,11 +140,9 @@ contract Lottery is Ownable {
 
             roundReward[round].push(dailyTickets[luckyNumber]);
             winnings[winner].push(luckyNumber);
-
-            console.log("Lucky number %s", luckyNumber);
-            console.log("Winner %s", winner);
         }
         lotteryInformation.currentRound++;
+        latestRollTime = block.timestamp;
         emit rollLuckyTicketsEvent(luckyNumbers, round);
         return luckyNumbers;
     }
@@ -157,20 +167,7 @@ contract Lottery is Ownable {
         } else if (_parameter == PARAMETER.CLAIM_TICKET_TIME) {
             lotteryInformation.claimTicketTime = _input;
         }
-        console.log("New lottery");
-        console.log("Epoch time: %s", lotteryInformation.epochTime);
-        console.log(
-            "Number rewards of round: %s",
-            lotteryInformation.numberRewardsOfRound
-        );
-        console.log("Total rounds: %s", lotteryInformation.totalRounds);
-        console.log("Rewards: %s", lotteryInformation.rewards);
-        console.log("Current round: %s", lotteryInformation.currentRound);
-        console.log("Roll ticket time: %s", lotteryInformation.rollTicketTime);
-        console.log(
-            "Claim ticket time: %s",
-            lotteryInformation.claimTicketTime
-        );
+        emit setLotteryEvent(lotteryInformation);
     }
 
     function randMod() internal returns (uint) {
@@ -195,31 +192,28 @@ contract Lottery is Ownable {
     /// @notice user claim ticket to get lucky number
     /// @param userAddress address of user
     /// @param timestamp timestamp of user claim ticket
-    /// @param dataHash hash of user address and timestamp
     /// @param signature a string of ecdsa signature of user address and timestamp, signed by admin's public key
     function claimDailyTicket(
         address userAddress,
         uint256 timestamp,
-        bytes32 dataHash,
         bytes memory signature
     ) public returns (uint) {
-        require(
-            checkUserClaimDailyTicket(userAddress) == false,
-            "User already claimed ticket today"
-        );
+        // require(
+        //     checkUserClaimDailyTicket(userAddress) == false,
+        //     "User already claimed ticket today"
+        // );
 
         // require before roll ticket time of today and after claim time of today
-        uint rollTimeOfToday = getRollLuckyTicketsTime();
-        console.log(timestamp);
-        console.log(rollTimeOfToday);
         require(
-            timestamp < rollTimeOfToday,
+            timestamp < getRollLuckyTicketsTime(),
             "Invalid ticket: current round is over"
         );
         require(
-            (timestamp % 86400) >= lotteryInformation.claimTicketTime,
+            timestamp >= getClaimTicketTime(),
             "Invalid ticket: claim ticket time has not started"
         );
+
+        bytes32 dataHash = getHash(userAddress, timestamp);
 
         address recovered = (dataHash.toEthSignedMessageHash()).recover(
             signature
@@ -232,10 +226,9 @@ contract Lottery is Ownable {
         if (isAdmin[recovered]) {
             verified = true;
         }
-        console.log("(Contract) Signer: %s", recovered);
         require(verified == true, "Invalid ticket: signer is not admin");
 
-        uint round = lotteryInformation.currentRound;
+        uint round = getRound();
 
         ticketCountByRound[round]++;
         uint luckyNumber = ticketCountByRound[round];
@@ -247,10 +240,7 @@ contract Lottery is Ownable {
         );
         dailyTicketsByUser[userAddress][luckyNumber] = ticket;
         dailyTickets[luckyNumber] = ticket;
-        // console.log("XXXXXXXXXXXXXX");
-        // console.log(dailyTickets[luckyNumber].timestamp);
         userLuckyNumber[userAddress].push(luckyNumber);
-        console.log("Ticket counter: %s", luckyNumber);
 
         emit eventClaimDailyTicket(
             userAddress,
@@ -264,24 +254,42 @@ contract Lottery is Ownable {
 
     function bytesToUint(bytes memory b) internal pure returns (uint256) {
         uint256 number;
-        console.log("Length: %s", b.length);
         for (uint i = 0; i < b.length; i++) {
-            console.log("Byte: %s", uint8(b[i]));
             number |= uint256(uint8(b[i])) << (8 * (b.length - (i + 1)));
         }
         return number;
+    }
+
+    function getRound() public returns (uint) {
+        if (latestRollTime < getRollLuckyTicketsTimePrevious() && lotteryInformation.currentRound != 0) {
+            lotteryInformation.currentRound++;
+        }
+        return lotteryInformation.currentRound;
     }
 
     function getLottery() public view returns (LotteryInformation memory) {
         return lotteryInformation;
     }
 
+    function getClaimTicketTime() public view returns (uint) {
+        return
+            getRollLuckyTicketsTimePrevious() +
+            lotteryInformation.claimTicketTime;
+    }
+
     function getRollLuckyTicketsTime() public view returns (uint) {
-        // 18h30 utc of that day
         return
             block.timestamp -
             (block.timestamp % 86400) +
             lotteryInformation.rollTicketTime;
+    }
+
+    function getRollLuckyTicketsTimePrevious() public view returns (uint) {
+        return
+            block.timestamp -
+            (block.timestamp % 86400) +
+            lotteryInformation.rollTicketTime -
+            86400;
     }
 
     function getLuckyTicketsByUser(
@@ -307,9 +315,11 @@ contract Lottery is Ownable {
     function getTotalTicketsByRound(
         uint round
     ) public view returns (LuckyTicket[] memory) {
-        LuckyTicket[] memory tickets = new LuckyTicket[](ticketCountByRound[round]);
+        LuckyTicket[] memory tickets = new LuckyTicket[](
+            ticketCountByRound[round]
+        );
         for (uint i = 0; i < ticketCountByRound[round]; i++) {
-            tickets[i] = dailyTickets[i+1];
+            tickets[i] = dailyTickets[i + 1];
         }
         return tickets;
     }
@@ -319,19 +329,15 @@ contract Lottery is Ownable {
     ) public view returns (bool) {
         uint round = lotteryInformation.currentRound;
         uint numberTicket = userLuckyNumber[userAddress].length;
-        console.log("Number ticket: %s", numberTicket);
         if (numberTicket == 0) {
-            console.log("User not claimed ticket");
             return false;
         }
         LuckyTicket memory ticket = dailyTicketsByUser[userAddress][
             userLuckyNumber[userAddress][numberTicket - 1]
         ];
         if (ticket.round == round) {
-            console.log("User claimed ticket");
             return true;
         }
-        console.log("User not claimed ticket");
         return false;
     }
 
@@ -359,9 +365,5 @@ contract Lottery is Ownable {
         latestTicketClaimTime = dailyTicketsByUser[userAddress][
             userLuckyNumber[userAddress][numberTicketClaimed - 1]
         ].timestamp;
-
-        console.log("Number ticket claimed: %s", numberTicketClaimed);
-        console.log("Number winnings: %s", numberWinnings);
-        console.log("Latest ticket claimed: %s", latestTicketClaimTime);
     }
 }
