@@ -7,7 +7,9 @@ const deploy: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer } = await getNamedAccounts();
   const result = await deploy("Lottery", {
     from: deployer,
-    args: [],
+    args: [
+      6 * 3600
+    ],
     log: true,
     // deterministicDeployment: true,
     skipIfAlreadyDeployed: true,

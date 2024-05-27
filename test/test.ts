@@ -14,14 +14,6 @@ describe("Lottery Contract", function () {
 
     [deployer] = await ethers.getSigners();
     contract = await getLottery();
-
-    // await contract.setLottery(3, 1);
-    await contract.setLottery(4, 19 * 1);
-    await contract.setLottery(5, 0 * 1);
-    await contract.setLottery(6, 20 * 1);
-    await contract.setLottery(7, 18 * 1);
-    const lotteryConfig = await contract.getLottery();
-    console.log(lotteryConfig);
   });
 
   it("should generate a valid signature", async () => {
@@ -62,7 +54,6 @@ describe("Lottery Contract", function () {
       }
 
       const userLuckyNumber = await contract.getCurrentRoundTicket(deployer.address);
-    //   await userLuckyNumber.wait();
       console.log(userLuckyNumber);
     });
   });
@@ -78,15 +69,14 @@ describe("Lottery Contract", function () {
 
   describe("setLottery", () => {
     it("should set lottery configurations", async () => {
-      await contract.setLottery(3, 1);
       await contract.setLottery(4, 19 * 1);
       await contract.setLottery(5, 0 * 1);
       await contract.setLottery(6, 20 * 1);
       await contract.setLottery(7, 18 * 1);
+      await contract.setLottery(3, 1);
       const lotteryConfig = await contract.getLottery();
       console.log(lotteryConfig);
 
-      // Add assertions to verify the configuration
     });
     async function runTest() {
       const timestamp = Math.floor(Date.now() / 1000);
@@ -114,6 +104,9 @@ describe("Lottery Contract", function () {
         }
       }
       try {
+        const userLuckyNumber = await contract.getCurrentRoundTicket(deployer.address);
+        console.log(userLuckyNumber);
+  
         const resultRollLuckyTicket = await contract
           .connect(deployer)
           .rollLuckyTickets();
@@ -137,6 +130,10 @@ describe("Lottery Contract", function () {
           await delay(5 * 1000);
         }
       }
+    });
+    it("should get round start time", async function () {
+      const rollTime = await contract.getRollLuckyTicketsTime(1);
+      console.log(rollTime);
     });
   });
 

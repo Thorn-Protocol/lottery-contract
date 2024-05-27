@@ -66,7 +66,7 @@ contract Lottery is Ownable {
         _;
     }
 
-    constructor() Ownable() {
+    constructor(uint startTime) Ownable() {
         isAdmin[msg.sender] = true;
         lotto = LotteryInformation(
             5,
@@ -79,6 +79,7 @@ contract Lottery is Ownable {
             24 * 3600
         );
         uint dayStart = block.timestamp - (block.timestamp % 86400);
+        dayStart += startTime;
         roundTimestamp[0] = RoundTimestamp(
             dayStart,
             dayStart + lotto.roundDuration,
@@ -102,7 +103,7 @@ contract Lottery is Ownable {
         uint round = lotto.currentRound;
         uint roundEnd = roundTimestamp[round].roundEnd;
 
-        if (roundEnd <= block.timestamp){
+        if (roundEnd < block.timestamp){
             round += Math.ceilDiv(
                 block.timestamp - roundEnd,
                 lotto.roundDuration
@@ -161,7 +162,7 @@ contract Lottery is Ownable {
         uint round = getRound();
         uint currentTime = block.timestamp;
 
-        // require(currentTime >= roundTimestamp[round][4], "Not roll time yet");
+        // require(currentTime >= roundTimestamp[round].rollTicketTime, "Not roll time yet");
         require(roundReward[round].length == 0, "Round already rolled");
         require(roundTimestamp[round].actualRollTime == 0, "Round already rolled");
 
@@ -177,14 +178,14 @@ contract Lottery is Ownable {
         uint8 count = 0;
         uint8 iteration = 0;
         while (count < numberRewardsOfRound && iteration < 20) {
-            // get random bytes
-            bytes memory rand = Sapphire.randomBytes(32, "");
-            uint luckyNumber = bytesToUint(rand);
+            // // get random bytes
+            // bytes memory rand = Sapphire.randomBytes(32, "");
+            // uint luckyNumber = bytesToUint(rand);
 
-            // // mock random generator
-            // uint luckyNumber = randNumber();
+            // mock random generator
+            uint luckyNumber = randNumber();
 
-            luckyNumber = luckyNumber % mod;
+            luckyNumber = luckyNumber % (mod + 1);
             bool skip = false;
             // if number already exists, skip
             for (uint i = 0; i < count; i++) {
@@ -330,7 +331,13 @@ contract Lottery is Ownable {
     }
 
     function getRollLuckyTicketsTime(uint round) public view returns (uint) {
-        return roundTimestamp[round].rollTicketTime;
+        if (roundTimestamp[round].rollTicketTime != 0)
+            return roundTimestamp[round].rollTicketTime;
+        else {
+            uint prevRound = lotto.currentRound;
+            return roundTimestamp[prevRound].roundEnd + lotto.rollTicketTime;
+        } 
+        
     }
 
     function getTotalAttendeeByRound(uint round) public view returns (uint) {
