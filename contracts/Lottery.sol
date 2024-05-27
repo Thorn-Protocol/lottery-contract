@@ -157,7 +157,7 @@ contract Lottery is Ownable {
     }
 
 
-    function rollLuckyTickets() public returns (uint[] memory) {
+    function rollLuckyTickets() public onlyAdmin returns (uint[] memory) {
         uint round = getRound();
         uint currentTime = block.timestamp;
 
