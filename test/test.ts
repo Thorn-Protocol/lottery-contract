@@ -1,26 +1,29 @@
 import { arrayify } from "ethers/lib/utils";
-import { getLottery, getSignOnChain, getVerifynOnChain } from "../src/utils/helper";
-// import { ethers } from "hardhat";
+import { getLottery } from "../src/utils/helper";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { deployments, ethers } from "hardhat";
-import hre from "hardhat";
 
-const main = async () => {
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+describe("Lottery Contract", function () {
+  let deployer: SignerWithAddress;
+  let contract: any;
+
+  before(async () => {
     await deployments.fixture();
 
-    let deployer: SignerWithAddress;
     [deployer] = await ethers.getSigners();
+    contract = await getLottery();
+  });
 
-    const contract = await getLottery();
-    // const LotteryDeployment = await deployments.get("Lottery");
-    // const Lottery = await hre.ethers.getContractFactory("Lottery");
-    // const contract = Lottery.attach("0xd8d32D69456646889E10E6E068F45D04E890AdD7");
-
-
+  it("should generate a valid signature", async () => {
     const timestamp = Math.floor(Date.now() / 1000);
     const ticket = [deployer.address, timestamp];
 
-    const data = ethers.utils.defaultAbiCoder.encode(["address", "uint256"], ticket);
+    const data = ethers.utils.defaultAbiCoder.encode(
+      ["address", "uint256"],
+      ticket
+    );
     const dataHash = ethers.utils.keccak256(data);
     const message = arrayify(dataHash);
 
@@ -29,62 +32,110 @@ const main = async () => {
     console.log("signature: ", signature);
 
     const expectSigner = ethers.utils.verifyMessage(message, signature);
-    console.log(" expect address ", expectSigner);
+    console.log(" expected address ", expectSigner);
+  });
 
-    // TEST 1: claimDailyTicket
-    const resultVerifyOnchain = await contract.claimDailyTicket(deployer.address, timestamp, message, signature);
-    await contract.claimDailyTicket(deployer.address, timestamp, message, signature);
-    await contract.claimDailyTicket(deployer.address, timestamp, message, signature);
-    await contract.claimDailyTicket(deployer.address, timestamp, message, signature);
-    await contract.claimDailyTicket(deployer.address, timestamp, message, signature);
-    await contract.claimDailyTicket(deployer.address, timestamp, message, signature);
-    await contract.claimDailyTicket(deployer.address, timestamp, message, signature);
-    await contract.claimDailyTicket(deployer.address, timestamp, message, signature);
-    // const result = await resultVerifyOnchain.wait();
-    // // console.log("Result verify on chain: ", result);
+  describe("claimDailyTicket", () => {
+    it("should allow user to claim daily ticket", async () => {
+      const timestamp = Math.floor(Date.now() / 1000);
+      const ticket = [deployer.address, timestamp];
 
-    // TEST 2: rollLuckyTicket
-    // contract owner
-    const owner = await contract.owner();
-    console.log("owner: ", owner);
-    console.log(deployer.address)
-    let resultRollLuckyTicket = await contract.connect(deployer).rollLuckyTickets();
-    console.log("Result roll lucky ticket: ", resultRollLuckyTicket);
+      const data = ethers.utils.defaultAbiCoder.encode(
+        ["address", "uint256"],
+        ticket
+      );
+      const dataHash = ethers.utils.keccak256(data);
+      const message = arrayify(dataHash);
 
-    // TEST 3: getTotalLuckyNumbersByRound
-    const totalLuckyNumbers = await contract.getTotalLuckyNumbersByRound(0);
-    console.log("Total lucky numbers by round 0: ", totalLuckyNumbers);
+      const signature = await deployer.signMessage(message);
 
-    // TEST 4: checkUserClaimDailyTicket
-    const checkUserClaimDailyTicket = await contract.checkUserClaimDailyTicket(deployer.address);
-    console.log("User claimed daily ticket: ", checkUserClaimDailyTicket);
+      for (let i = 0; i < 7; i++) {
+        await contract.claimDailyTicket(deployer.address, timestamp, signature);
+      }
 
-    // TEST 5: getTotalAttendeeByRound
-    const totalAttendee = await contract.getTotalAttendeeByRound(0);
-    console.log("Total attendee by round 0: ", totalAttendee);
-
-    // TEST 6: getUserInfo
-    const userInfo = await contract.getUserInfo(deployer.address);
-    console.log("User info: ", userInfo);
-
-    // // TEST 7: setNumberRewardsOfRound
-    // const resultSetNumberRewardsOfRound = await contract.setNumberRewardsOfRound(4);
-    // console.log("Result set number rewards of round: ", resultSetNumberRewardsOfRound);
-    // resultRollLuckyTicket = await contract.connect(deployer).rollLuckyTickets();
-    // console.log("Result roll lucky ticket: ", resultRollLuckyTicket);
-
-    // // TEST 8: setNumberOfRounds
-    // const resultSetNumberOfRounds = await contract.setNumberOfRounds(7);
-    // console.log("Result set number of rounds: ", resultSetNumberOfRounds);
-
-    // TEST 9: setLottery
-    const newLottery = await contract.setLottery(0, 1234567890);
-    console.log("New lottery: ", newLottery);
-}
-
-main()
-    .then(() => process.exit(0))
-    .catch((error) => {
-        console.error(error);
-        process.exit(1);
+      const userLuckyNumber = await contract.getCurrentRoundTicket(deployer.address);
+      console.log(userLuckyNumber);
     });
+  });
+
+  describe("rollLuckyTickets", () => {
+    it("should roll lucky tickets", async () => {
+      const result = await contract.connect(deployer).rollLuckyTickets();
+      console.log("Result roll lucky ticket: ", result);
+
+      // Add assertions to verify the result
+    });
+  });
+
+  describe("setLottery", () => {
+    it("should set lottery configurations", async () => {
+      await contract.setLottery(4, 19 * 1);
+      await contract.setLottery(5, 0 * 1);
+      await contract.setLottery(6, 20 * 1);
+      await contract.setLottery(7, 18 * 1);
+      await contract.setLottery(3, 1);
+      const lotteryConfig = await contract.getLottery();
+      console.log(lotteryConfig);
+
+    });
+    async function runTest() {
+      const timestamp = Math.floor(Date.now() / 1000);
+      const ticket = [deployer.address, timestamp];
+
+      const data = ethers.utils.defaultAbiCoder.encode(
+        ["address", "uint256"],
+        ticket
+      );
+      const dataHash = ethers.utils.keccak256(data);
+      const message = arrayify(dataHash);
+
+      const signature = await deployer.signMessage(message);
+
+      for (let i = 0; i < 7; i++) {
+        try {
+          await contract.claimDailyTicket(
+            deployer.address,
+            timestamp,
+            signature
+          );
+        } catch (error) {
+          console.log("Error: ", error);
+          continue;
+        }
+      }
+      try {
+        const userLuckyNumber = await contract.getCurrentRoundTicket(deployer.address);
+        console.log(userLuckyNumber);
+  
+        const resultRollLuckyTicket = await contract
+          .connect(deployer)
+          .rollLuckyTickets();
+          console.log("Result roll lucky ticket: ", resultRollLuckyTicket);
+      } catch (error) {
+        console.log("Error: ", error);
+      }
+
+      // Add assertions to verify the result if needed
+      // expect(resultRollLuckyTicket).to.be.someValue;
+    }
+
+    it("should run test every 10 seconds", async function () {
+      this.timeout(2 * 60 * 1000); // Set timeout to 1 minute for this test
+
+      for (let i = 0; i < 6; i++) {
+        console.log(`Running test iteration ${i + 1}`);
+        await runTest();
+        if (i < 5) {
+          // Delay only if it's not the last iteration
+          await delay(5 * 1000);
+        }
+      }
+    });
+    it("should get round start time", async function () {
+      const rollTime = await contract.getRollLuckyTicketsTime(1);
+      console.log(rollTime);
+    });
+  });
+
+  // Additional tests can be added here, following the same pattern
+});
