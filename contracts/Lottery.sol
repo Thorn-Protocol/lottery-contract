@@ -114,7 +114,6 @@ contract Lottery is Ownable {
 
     function startRound(uint round, bool force) internal returns (uint) {
         uint prevRound = lotto.currentRound;
-        // roundStart
         if (force) {
             roundTimestamp[round].roundStart = block.timestamp;
         }
@@ -178,12 +177,12 @@ contract Lottery is Ownable {
         uint8 count = 0;
         uint8 iteration = 0;
         while (count < numberRewardsOfRound && iteration < 20) {
-            // // get random bytes
-            // bytes memory rand = Sapphire.randomBytes(32, "");
-            // uint luckyNumber = bytesToUint(rand);
+            // get random bytes
+            bytes memory rand = Sapphire.randomBytes(32, "");
+            uint luckyNumber = bytesToUint(rand);
 
-            // mock random generator
-            uint luckyNumber = randNumber();
+            // // mock random generator
+            // uint luckyNumber = randNumber();
 
             luckyNumber = luckyNumber % mod;
             bool skip = false;
@@ -359,8 +358,8 @@ contract Lottery is Ownable {
         return result;
     }
 
-    function getCurrentRoundTicket(address userAddress) public returns (uint) {
-        uint round = getRound();
+    function getCurrentRoundTicket(address userAddress) public view returns (uint) {
+        uint round = lotto.currentRound;
         uint numberTicketClaimed = userLuckyNumber[userAddress].length;
         // latest ticket claimed
         if (numberTicketClaimed == 0) {
