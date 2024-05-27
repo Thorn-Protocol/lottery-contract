@@ -31,11 +31,16 @@ contract Lottery is Ownable {
         uint timestamp;
     }
 
-    // roundTimestamp[round] = {roundStart, roundEnd, claimStart, claimEnd, rollTicketTime, actualRollTime};
-    // init as 0, if check != 0, dont update
-    // or init when increment round when roll
-    // use to check when claim
-    mapping(uint => uint[6]) public roundTimestamp;
+    struct RoundTimestamp {
+        uint roundStart;
+        uint roundEnd;
+        uint claimStart;
+        uint claimEnd;
+        uint rollTicketTime;
+        uint actualRollTime;
+    }
+
+    mapping(uint => RoundTimestamp) public roundTimestamp;
     mapping(address => uint[]) public userLuckyNumber;
     mapping(uint => LuckyTicket) public dailyTickets;
     mapping(uint => uint) ticketCountByRound;
@@ -71,17 +76,17 @@ contract Lottery is Ownable {
             11 * 3600 + 30 * 60,
             0,
             24 * 3600,
-            24 * 2600
+            24 * 3600
         );
         uint dayStart = block.timestamp - (block.timestamp % 86400);
-        roundTimestamp[0] = [
+        roundTimestamp[0] = RoundTimestamp(
             dayStart,
             dayStart + lotto.roundDuration,
             dayStart + lotto.claimTicketTime,
             dayStart + lotto.claimTicketTime + lotto.claimDuration,
             dayStart + lotto.rollTicketTime,
             0
-        ];
+        );
     }
 
     function setAdmin(address _newAdmin) public onlyOwner {
@@ -95,7 +100,7 @@ contract Lottery is Ownable {
 
     function getRound() public returns (uint) {
         uint round = lotto.currentRound;
-        uint roundEnd = roundTimestamp[round][1];
+        uint roundEnd = roundTimestamp[round].roundEnd;
 
         if (roundEnd <= block.timestamp){
             round += Math.ceilDiv(
@@ -107,34 +112,28 @@ contract Lottery is Ownable {
         return round;
     }
 
-    function startRound(uint round, bool force) public returns (uint) {
+    function startRound(uint round, bool force) internal returns (uint) {
         uint prevRound = lotto.currentRound;
-        // uint round = lotto.currentRound++;
         // roundStart
         if (force) {
-            roundTimestamp[round][0] = block.timestamp;
+            roundTimestamp[round].roundStart = block.timestamp;
         }
         else {
-            roundTimestamp[round][0] = roundTimestamp[prevRound][1];
+            roundTimestamp[round].roundStart = roundTimestamp[prevRound].roundEnd;
         }
-        // roundEnd
-        roundTimestamp[round][1] =
-            roundTimestamp[round][0] +
+        roundTimestamp[round].roundEnd =
+            roundTimestamp[round].roundStart +
             lotto.roundDuration;
-        // claimStart
-        roundTimestamp[round][2] =
-            roundTimestamp[round][0] +
+        roundTimestamp[round].claimStart =
+            roundTimestamp[round].roundStart +
             lotto.claimTicketTime;
-        // claimEnd
-        roundTimestamp[round][3] =
-            roundTimestamp[round][2] +
+        roundTimestamp[round].claimEnd =
+            roundTimestamp[round].claimStart +
             lotto.claimDuration;
-        // rollTicketTime
-        roundTimestamp[round][4] =
-            roundTimestamp[round][0] +
+        roundTimestamp[round].rollTicketTime =
+            roundTimestamp[round].roundStart +
             lotto.rollTicketTime;
-        // actualRollTime
-        roundTimestamp[round][5] = 0;
+        roundTimestamp[round].actualRollTime = 0;
         lotto.currentRound = round;
         return round;
     }
@@ -165,7 +164,7 @@ contract Lottery is Ownable {
 
         // require(currentTime >= roundTimestamp[round][4], "Not roll time yet");
         require(roundReward[round].length == 0, "Round already rolled");
-        require(roundTimestamp[round][5] == 0, "Round already rolled");
+        require(roundTimestamp[round].actualRollTime == 0, "Round already rolled");
 
         uint mod = ticketCountByRound[round];
         uint numberRewardsOfRound = lotto.numberRewardsOfRound;
@@ -213,7 +212,7 @@ contract Lottery is Ownable {
             winnings[winner].push(luckyNumber);
         }
 
-        roundTimestamp[round][5] = currentTime;
+        roundTimestamp[round].actualRollTime = currentTime;
         emit rollLuckyTicketsEvent(luckyNumbers, round);
         return luckyNumbers;
     }
@@ -286,9 +285,9 @@ contract Lottery is Ownable {
 
         uint currentTime = block.timestamp;
         uint round = getRound();
-        // require(roundTimestamp[round][5] == 0, "Round already rolled");
-        // require(currentTime >= roundTimestamp[round][2], "Invalid ticket: Claim ticket time has not started for this round" );
-        require(currentTime < roundTimestamp[round][3], "Invalid ticket: Claim ticket time ended for this round");
+        require(roundTimestamp[round].actualRollTime == 0, "Invalid ticket: Round already rolled");
+        require(currentTime >= roundTimestamp[round].claimStart, "Invalid ticket: Claim ticket time has not started for this round" );
+        require(currentTime < roundTimestamp[round].claimEnd, "Invalid ticket: Claim ticket time ended for this round");
 
         bytes32 dataHash = getHash(userAddress, timestamp);
 
@@ -305,6 +304,7 @@ contract Lottery is Ownable {
         }
         require(verified == true, "Invalid ticket: signer is not admin");
 
+        // count from 1
         ticketCountByRound[round]++;
         uint luckyNumber = ticketCountByRound[round];
         LuckyTicket memory ticket = LuckyTicket(
@@ -331,7 +331,7 @@ contract Lottery is Ownable {
     }
 
     function getRollLuckyTicketsTime(uint round) public view returns (uint) {
-        return roundTimestamp[round][4];
+        return roundTimestamp[round].rollTicketTime;
     }
 
     function getTotalAttendeeByRound(uint round) public view returns (uint) {
@@ -358,6 +358,20 @@ contract Lottery is Ownable {
         }
         return result;
     }
+
+    function getCurrentRoundTicket(address userAddress) public returns (uint) {
+        uint round = getRound();
+        uint numberTicketClaimed = userLuckyNumber[userAddress].length;
+        // latest ticket claimed
+        if (numberTicketClaimed == 0) {
+            return 0;
+        }
+        LuckyTicket memory luckyTicket = dailyTickets[
+            userLuckyNumber[userAddress][numberTicketClaimed - 1]
+        ];
+        if (luckyTicket.round == round) return luckyTicket.luckyNumber;
+        return 0;
+    } 
 
     function getTotalTicketsByRound(
         uint round

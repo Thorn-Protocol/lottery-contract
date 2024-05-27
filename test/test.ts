@@ -61,7 +61,10 @@ describe("Lottery Contract", function () {
         await contract.claimDailyTicket(deployer.address, timestamp, signature);
       }
 
-      // Additional assertions to verify state can be added here
+      console.log("AAAAA");
+      const userLuckyNumber = await contract.getCurrentRoundTicket(deployer.address);
+    //   await userLuckyNumber.wait();
+      console.log(await userLuckyNumber.wait());
     });
   });
 
