@@ -73,10 +73,10 @@ contract Lottery is Ownable {
             20,
             50 * 10 ** 18,
             0,
-            11 * 3600 + 30 * 60,
+            22 * 3600,
             0,
             24 * 3600,
-            24 * 3600
+            22 * 3600
         );
         uint dayStart = block.timestamp - (block.timestamp % 86400);
         dayStart += startTime;
@@ -162,7 +162,7 @@ contract Lottery is Ownable {
         uint round = getRound();
         uint currentTime = block.timestamp;
 
-        // require(currentTime >= roundTimestamp[round].rollTicketTime, "Not roll time yet");
+        require(currentTime >= roundTimestamp[round].rollTicketTime, "Not roll time yet");
         require(roundReward[round].length == 0, "Round already rolled");
         require(roundTimestamp[round].actualRollTime == 0, "Round already rolled");
 
@@ -278,10 +278,10 @@ contract Lottery is Ownable {
         uint256 timestamp,
         bytes memory signature
     ) public returns (uint) {
-        // require(
-        //     checkUserClaimDailyTicket(userAddress) == false,
-        //     "User already claimed ticket today"
-        // );
+        require(
+            checkUserClaimDailyTicket(userAddress) == false,
+            "User already claimed ticket today"
+        );
 
         uint currentTime = block.timestamp;
         uint round = getRound();
@@ -335,7 +335,7 @@ contract Lottery is Ownable {
             return roundTimestamp[round].rollTicketTime;
         else {
             uint prevRound = lotto.currentRound;
-            return roundTimestamp[prevRound].roundEnd + lotto.rollTicketTime;
+            return roundTimestamp[prevRound].roundStart + lotto.roundDuration * (round - prevRound) + lotto.rollTicketTime;
         } 
         
     }
