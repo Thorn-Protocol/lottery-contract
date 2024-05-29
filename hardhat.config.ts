@@ -3,6 +3,7 @@ import "@oasisprotocol/sapphire-hardhat";
 import "@nomiclabs/hardhat-ethers";
 import "@typechain/hardhat";
 import "hardhat-deploy";
+import "@openzeppelin/hardhat-upgrades";
 
 import dotenv from "dotenv";
 dotenv.config();

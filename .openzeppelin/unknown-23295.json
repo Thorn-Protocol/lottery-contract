@@ -1,0 +1,339 @@
+{
+  "manifestVersion": "3.2",
+  "admin": {
+    "address": "0x7c7da17526F45C5A907d8dFa7BD05c14EBc976FA",
+    "txHash": "0xd0ad4861baae58364619e14690dc5fe94c3136c1e0c66c391a4fdfb83775eaf1"
+  },
+  "proxies": [
+    {
+      "address": "0x175dd8d08272BbCA7070B7ce29B6B4aAd528D980",
+      "txHash": "0x69c90639b89fdcb142726014feac70d7329423e3542361ec45f6ac3fb00d1819",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "c60d578100c46df84a6655f4eb4b0eb13fd54c64d83c89c7d4f9dd7e261d7880": {
+      "address": "0x72D8D2eFa4E43d1409F240Dcc9c29D69bDe54d3a",
+      "txHash": "0x816fa61a0c0df7bec48074517eb74576e73034558041ad064827137ce4de9b4f",
+      "layout": {
+        "solcVersion": "0.8.24",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:40"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:88"
+          },
+          {
+            "label": "roundTimestamp",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_mapping(t_uint256,t_struct(RoundTimestamp)2922_storage)",
+            "contract": "Lottery",
+            "src": "contracts/Lottery.sol:44"
+          },
+          {
+            "label": "userLuckyNumber",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)",
+            "contract": "Lottery",
+            "src": "contracts/Lottery.sol:45"
+          },
+          {
+            "label": "dailyTickets",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_mapping(t_uint256,t_struct(LuckyTicket)2909_storage)",
+            "contract": "Lottery",
+            "src": "contracts/Lottery.sol:46"
+          },
+          {
+            "label": "ticketCountByRound",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "contract": "Lottery",
+            "src": "contracts/Lottery.sol:47"
+          },
+          {
+            "label": "roundReward",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_mapping(t_uint256,t_array(t_struct(LuckyTicket)2909_storage)dyn_storage)",
+            "contract": "Lottery",
+            "src": "contracts/Lottery.sol:48"
+          },
+          {
+            "label": "winnings",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)",
+            "contract": "Lottery",
+            "src": "contracts/Lottery.sol:49"
+          },
+          {
+            "label": "isAdmin",
+            "offset": 0,
+            "slot": "157",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "Lottery",
+            "src": "contracts/Lottery.sol:50"
+          },
+          {
+            "label": "lotto",
+            "offset": 0,
+            "slot": "158",
+            "type": "t_struct(LotteryInformation)2900_storage",
+            "contract": "Lottery",
+            "src": "contracts/Lottery.sol:51"
+          },
+          {
+            "label": "randNonce",
+            "offset": 0,
+            "slot": "166",
+            "type": "t_uint256",
+            "contract": "Lottery",
+            "src": "contracts/Lottery.sol:52"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_struct(LuckyTicket)2909_storage)dyn_storage": {
+            "label": "struct Lottery.LuckyTicket[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_array(t_uint256)dyn_storage)": {
+            "label": "mapping(address => uint256[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_array(t_struct(LuckyTicket)2909_storage)dyn_storage)": {
+            "label": "mapping(uint256 => struct Lottery.LuckyTicket[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(LuckyTicket)2909_storage)": {
+            "label": "mapping(uint256 => struct Lottery.LuckyTicket)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(RoundTimestamp)2922_storage)": {
+            "label": "mapping(uint256 => struct Lottery.RoundTimestamp)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(LotteryInformation)2900_storage": {
+            "label": "struct Lottery.LotteryInformation",
+            "members": [
+              {
+                "label": "numberRewardsOfRound",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "totalRounds",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "rewards",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "currentRound",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "rollTicketTime",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "claimTicketTime",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "roundDuration",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "6"
+              },
+              {
+                "label": "claimDuration",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "7"
+              }
+            ],
+            "numberOfBytes": "256"
+          },
+          "t_struct(LuckyTicket)2909_storage": {
+            "label": "struct Lottery.LuckyTicket",
+            "members": [
+              {
+                "label": "luckyNumber",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "round",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "userAddress",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "timestamp",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(RoundTimestamp)2922_storage": {
+            "label": "struct Lottery.RoundTimestamp",
+            "members": [
+              {
+                "label": "roundStart",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "roundEnd",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "claimStart",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "claimEnd",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "rollTicketTime",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "actualRollTime",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "5"
+              }
+            ],
+            "numberOfBytes": "192"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    }
+  }
+}

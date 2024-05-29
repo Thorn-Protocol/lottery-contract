@@ -4,11 +4,12 @@ pragma solidity ^0.8.24;
 
 // import ecdsa library
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@oasisprotocol/sapphire-contracts/contracts/Sapphire.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-contract Lottery is Ownable {
+contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     using ECDSA for bytes32;
     using Sapphire for bytes;
     using Math for uint;
@@ -48,6 +49,7 @@ contract Lottery is Ownable {
     mapping(address => uint[]) public winnings;
     mapping(address => bool) public isAdmin;
     LotteryInformation lotto;
+    uint randNonce;
 
     event eventClaimDailyTicket(
         address userAddress,
@@ -66,7 +68,7 @@ contract Lottery is Ownable {
         _;
     }
 
-    constructor(uint startTime) Ownable() {
+    function initialize(uint startTime) public initializer  {
         isAdmin[msg.sender] = true;
         lotto = LotteryInformation(
             5,
@@ -88,6 +90,11 @@ contract Lottery is Ownable {
             dayStart + lotto.rollTicketTime,
             0
         );
+
+        randNonce = 0;
+
+        __Ownable_init_unchained();
+        __ReentrancyGuard_init_unchained();
     }
 
     function setAdmin(address _newAdmin) public onlyOwner {
@@ -138,7 +145,7 @@ contract Lottery is Ownable {
         return round;
     }
 
-    uint randNonce = 0;
+    
     function randNumber() internal returns (uint) {
         randNonce++;
         return
@@ -277,7 +284,7 @@ contract Lottery is Ownable {
         address userAddress,
         uint256 timestamp,
         bytes memory signature
-    ) public returns (uint) {
+    ) public nonReentrant returns (uint) {
         require(
             checkUserClaimDailyTicket(userAddress) == false,
             "User already claimed ticket today"
@@ -337,7 +344,6 @@ contract Lottery is Ownable {
             uint prevRound = lotto.currentRound;
             return roundTimestamp[prevRound].roundStart + lotto.roundDuration * (round - prevRound) + lotto.rollTicketTime;
         } 
-        
     }
 
     function getTotalAttendeeByRound(uint round) public view returns (uint) {
