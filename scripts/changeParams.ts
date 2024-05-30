@@ -14,12 +14,34 @@ enum PARAMETER {
     CLAIM_DURATION
 }
 
+interface RoundTimestamp {
+    roundStart: number
+    roundEnd: number
+    claimStart: number
+    claimEnd: number
+    rollTicketTime: number
+    actualRollTime: number
+}
+
+
 async function main() {
     const lottery: Lottery__factory = await ethers.getContractFactory("Lottery");
     const rd = lottery.attach(process.env.LOTTERY!)
 
-    // const lotto = await rd.getLottery()
-    // console.log(lotto)
+    const lotto = await rd.getLottery()
+    console.log(lotto)
+
+    // let round0: RoundTimestamp = {
+    //     roundStart: 1717088400 - 10 * 3600 + 600,
+    //     roundEnd: 1717090200 - 10 * 3600 + 600,
+    //     claimStart: 1717088400 - 10 * 3600 + 600,
+    //     claimEnd: 1717054200,
+    //     rollTicketTime: 1717088400 - 10 * 3600 + 1200 + 600,
+    //     actualRollTime: 0
+    // }
+
+    // const admin = await (await rd.changeRoundTimestamp(0, round0)).wait()
+    // console.log(admin.transactionHash)
 
     // const luckyTIcket = await rd.roundTimestamp(0)
     // console.log(luckyTIcket)
@@ -39,7 +61,7 @@ async function main() {
     // const rollLuckyTickets = await (await rd.rollLuckyTickets()).wait()
     // console.log(rollLuckyTickets.transactionHash)
 
-    // const admin = await (await rd.setAdmin("0x595622cBd0Fc4727DF476a1172AdA30A9dDf8F43")).wait()
+    // const admin = await (await rd.setAdmin("0xdE2Ad170EA4b11e0c6BDEc63a3F212E377ef1dc4")).wait()
     // console.log(admin.transactionHash)
 }
 

@@ -43,6 +43,7 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     mapping(uint => RoundTimestamp) public roundTimestamp;
     mapping(address => uint[]) public userLuckyNumber;
+    mapping(address => mapping (uint => LuckyTicket)) public userLuckyTicketsByRound;
     mapping(uint => LuckyTicket) public dailyTickets;
     mapping(uint => uint) ticketCountByRound;
     mapping(uint => LuckyTicket[]) public roundReward;
@@ -71,14 +72,22 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     function initialize(uint startTime) public initializer  {
         isAdmin[msg.sender] = true;
         lotto = LotteryInformation(
+            // 5,
+            // 20,
+            // 50 * 10 ** 18,
+            // 0,
+            // 22 * 3600,
+            // 0,
+            // 24 * 3600,
+            // 22 * 3600
             5,
             20,
             50 * 10 ** 18,
             0,
-            5 * 3600,
-            4 * 3600,
-            1 * 3600,
-            1 * 3600
+            1800,
+            0,
+            3600,
+            1800
         );
         uint dayStart = block.timestamp - (block.timestamp % 86400);
         dayStart += startTime;
@@ -106,11 +115,15 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         isAdmin[_admin] = !status;
     }
 
-    function getRound() public returns (uint) {
+    function getRound() public onlyAdmin() returns (uint) {
         uint round = lotto.currentRound;
         uint roundEnd = roundTimestamp[round].roundEnd;
 
         if (roundEnd < block.timestamp){
+            // if(roundReward[round].length == 0) {
+            //     rollLuckyTickets();
+            // }
+            
             round += Math.ceilDiv(
                 block.timestamp - roundEnd,
                 lotto.roundDuration
@@ -166,7 +179,7 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
 
     function rollLuckyTickets() public onlyAdmin returns (uint[] memory) {
-        uint round = getRound();
+        uint round = lotto.currentRound;
         uint currentTime = block.timestamp;
 
         require(currentTime >= roundTimestamp[round].rollTicketTime, "Not roll time yet");
@@ -277,12 +290,13 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         if (numberTicket == 0) {
             return false;
         }
-        LuckyTicket memory ticket = dailyTickets[numberTicket];
-        if (ticket.round == round) {
+        LuckyTicket memory ticket = dailyTickets[userLuckyNumber[userAddress][numberTicket-1]];
+        if (ticket.round == round && ticket.userAddress == userAddress) {
             return true;
         }
         return false;
     }
+
 
     function claimDailyTicket(
         address userAddress,
@@ -295,7 +309,8 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         );
 
         uint currentTime = block.timestamp;
-        uint round = getRound();
+        uint round = lotto.currentRound;
+
         require(roundTimestamp[round].actualRollTime == 0, "Invalid ticket: Round already rolled");
         require(currentTime >= roundTimestamp[round].claimStart, "Invalid ticket: Claim ticket time has not started for this round" );
         require(currentTime < roundTimestamp[round].claimEnd, "Invalid ticket: Claim ticket time ended for this round");
