@@ -123,6 +123,7 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     }
 
     function startRound(uint round, bool force) internal returns (uint) {
+
         uint prevRound = lotto.currentRound;
         if (force) {
             roundTimestamp[round].roundStart = block.timestamp - block.timestamp % 86400 + roundStartTime;
@@ -279,7 +280,7 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             return false;
         }
         LuckyTicket memory ticket = dailyTickets[numberTicket];
-        if (ticket.round == round) {
+        if (ticket.round == round && ticket.userAddress == userAddress) {
             return true;
         }
         return false;
