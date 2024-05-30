@@ -387,7 +387,7 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         LuckyTicket memory luckyTicket = dailyTickets[
             userLuckyNumber[userAddress][numberTicketClaimed - 1]
         ];
-        if (luckyTicket.round == round) return luckyTicket.luckyNumber;
+        if (luckyTicket.round == round && luckyTicket.userAddress == userAddress) return luckyTicket.luckyNumber;
         return 0;
     } 
 
