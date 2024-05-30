@@ -50,6 +50,7 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     mapping(address => bool) public isAdmin;
     LotteryInformation lotto;
     uint randNonce;
+    uint roundStartTime;
 
     event eventClaimDailyTicket(
         address userAddress,
@@ -80,6 +81,7 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             24 * 3600,
             22 * 3600
         );
+        roundStartTime = startTime;
         uint dayStart = block.timestamp - (block.timestamp % 86400);
         dayStart += startTime;
         roundTimestamp[0] = RoundTimestamp(
@@ -123,7 +125,7 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     function startRound(uint round, bool force) internal returns (uint) {
         uint prevRound = lotto.currentRound;
         if (force) {
-            roundTimestamp[round].roundStart = block.timestamp;
+            roundTimestamp[round].roundStart = block.timestamp - block.timestamp % 86400 + roundStartTime;
         }
         else {
             roundTimestamp[round].roundStart = roundTimestamp[prevRound].roundEnd;
@@ -185,12 +187,12 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint8 count = 0;
         uint8 iteration = 0;
         while (count < numberRewardsOfRound && iteration < 20) {
-            // // get random bytes
-            // bytes memory rand = Sapphire.randomBytes(32, "");
-            // uint luckyNumber = bytesToUint(rand);
+            // get random bytes
+            bytes memory rand = Sapphire.randomBytes(32, "");
+            uint luckyNumber = bytesToUint(rand);
 
-            // mock random generator
-            uint luckyNumber = randNumber();
+            // // mock random generator
+            // uint luckyNumber = randNumber();
 
             luckyNumber = luckyNumber % (mod + 1);
             bool skip = false;
@@ -232,7 +234,8 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         ROLL_TICKET_TIME,
         CLAIM_TICKET_TIME,
         ROUND_DURATION,
-        CLAIM_DURATION
+        CLAIM_DURATION,
+        ROUND_START_TIME
     }
 
     function setLottery(PARAMETER _parameter, uint _input) public onlyAdmin {
@@ -253,7 +256,9 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             lotto.roundDuration = _input;
         } else if (_parameter == PARAMETER.CLAIM_DURATION) {
             lotto.claimDuration = _input;
-        }
+        } else if (_parameter == PARAMETER.ROUND_START_TIME) {
+            roundStartTime = _input;
+        } 
         emit setLotteryEvent(lotto, msg.sender);
     }
 
