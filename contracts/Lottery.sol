@@ -51,6 +51,7 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     mapping(address => bool) public isAdmin;
     LotteryInformation lotto;
     uint randNonce;
+    uint roundStartTime;
 
     event eventClaimDailyTicket(
         address userAddress,
@@ -84,11 +85,12 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             20,
             50 * 10 ** 18,
             0,
-            1800,
+            22 * 3600,
             0,
-            3600,
-            1800
+            24 * 3600,
+            22 * 3600
         );
+        roundStartTime = startTime;
         uint dayStart = block.timestamp - (block.timestamp % 86400);
         dayStart += startTime;
         roundTimestamp[0] = RoundTimestamp(
@@ -120,10 +122,6 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint roundEnd = roundTimestamp[round].roundEnd;
 
         if (roundEnd < block.timestamp){
-            // if(roundReward[round].length == 0) {
-            //     rollLuckyTickets();
-            // }
-            
             round += Math.ceilDiv(
                 block.timestamp - roundEnd,
                 lotto.roundDuration
@@ -134,9 +132,10 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     }
 
     function startRound(uint round, bool force) internal returns (uint) {
+
         uint prevRound = lotto.currentRound;
         if (force) {
-            roundTimestamp[round].roundStart = block.timestamp;
+            roundTimestamp[round].roundStart = block.timestamp - block.timestamp % 86400 + roundStartTime;
         }
         else {
             roundTimestamp[round].roundStart = roundTimestamp[prevRound].roundEnd;
@@ -197,12 +196,12 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint8 count = 0;
         uint8 iteration = 0;
         while (count < numberRewardsOfRound && iteration < 20) {
-            // // get random bytes
-            // bytes memory rand = Sapphire.randomBytes(32, "");
-            // uint luckyNumber = bytesToUint(rand);
+            // get random bytes
+            bytes memory rand = Sapphire.randomBytes(32, "");
+            uint luckyNumber = bytesToUint(rand);
 
-            // mock random generator
-            uint luckyNumber = randNumber();
+            // // mock random generator
+            // uint luckyNumber = randNumber();
 
             luckyNumber = luckyNumber % (mod + 1);
             bool skip = false;
@@ -244,7 +243,8 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         ROLL_TICKET_TIME,
         CLAIM_TICKET_TIME,
         ROUND_DURATION,
-        CLAIM_DURATION
+        CLAIM_DURATION,
+        ROUND_START_TIME
     }
 
     function setLottery(PARAMETER _parameter, uint _input) public onlyAdmin {
@@ -265,14 +265,11 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             lotto.roundDuration = _input;
         } else if (_parameter == PARAMETER.CLAIM_DURATION) {
             lotto.claimDuration = _input;
-        }
+        } else if (_parameter == PARAMETER.ROUND_START_TIME) {
+            roundStartTime = _input;
+        } 
         emit setLotteryEvent(lotto, msg.sender);
     }
-
-    function changeRoundTimestamp(uint round, RoundTimestamp memory _info) public onlyAdmin {
-        roundTimestamp[round] = _info;
-    }
-
 
     function getHash(
         address userAddress,
@@ -297,7 +294,6 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         return false;
     }
 
-
     function claimDailyTicket(
         address userAddress,
         uint256 timestamp,
@@ -310,7 +306,6 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
         uint currentTime = block.timestamp;
         uint round = lotto.currentRound;
-
         require(roundTimestamp[round].actualRollTime == 0, "Invalid ticket: Round already rolled");
         require(currentTime >= roundTimestamp[round].claimStart, "Invalid ticket: Claim ticket time has not started for this round" );
         require(currentTime < roundTimestamp[round].claimEnd, "Invalid ticket: Claim ticket time ended for this round");
@@ -341,6 +336,7 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         );
         dailyTickets[luckyNumber] = ticket;
         userLuckyNumber[userAddress].push(luckyNumber);
+        userLuckyTicketsByRound[userAddress][round] = ticket;
 
         emit eventClaimDailyTicket(
             userAddress,
@@ -380,12 +376,10 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         address userAddress
     ) public view returns (LuckyTicket[] memory) {
         LuckyTicket[] memory result = new LuckyTicket[](
-            userLuckyNumber[userAddress].length
+            lotto.currentRound + 1
         );
-        for (uint i = 0; i < userLuckyNumber[userAddress].length; i++) {
-            result[i] = dailyTickets[
-                userLuckyNumber[userAddress][i]
-            ];
+        for (uint i = 0; i <= lotto.currentRound; i++) {
+            result[i] = userLuckyTicketsByRound[userAddress][i];
         }
         return result;
     }

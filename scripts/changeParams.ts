@@ -26,9 +26,9 @@ interface RoundTimestamp {
 
 async function main() {
     const lottery: Lottery__factory = await ethers.getContractFactory("Lottery");
-    const rd = lottery.attach(process.env.LOTTERY!)
+    const rd = lottery.attach(process.env.LOTTERY_TEST!)
 
-    const lotto = await rd.getLottery()
+    const lotto = await rd.roundTimestamp(0)
     console.log(lotto)
 
     // let round0: RoundTimestamp = {
@@ -61,8 +61,25 @@ async function main() {
     // const rollLuckyTickets = await (await rd.rollLuckyTickets()).wait()
     // console.log(rollLuckyTickets.transactionHash)
 
-    // const admin = await (await rd.setAdmin("0xdE2Ad170EA4b11e0c6BDEc63a3F212E377ef1dc4")).wait()
+    // const admin = await (await rd.setAdmin("0x595622cBd0Fc4727DF476a1172AdA30A9dDf8F43")).wait()
     // console.log(admin.transactionHash)
+
+    const a = {
+        "address": "0x72e03B6E7AB9DdFe1699B65B8A46A3Cf30092020",
+        "timestamp": 1717074573,
+        "signature": "0x80d0cbe79e692c1f6bdde5aa0a4f53fb101c9520b8c9ffb13e709aca8a1400e13f6a31ce75032fb4ab0b83f23e919eee5577d903deee728511ad6da9ad4c57001c",
+        "data": [
+          "0x72e03B6E7AB9DdFe1699B65B8A46A3Cf30092020",
+          1717074573
+        ],
+        "dataHash": "0x564a6ee5f6dc9a296be81a76dd49a74a3da9724c938511667c619ad6ac865e7c"
+      }
+    const admin = await (await rd.claimDailyTicket(
+        a.address,
+        a.timestamp,
+        a.signature
+    )).wait()
+    console.log(admin.transactionHash)
 }
 
 main()

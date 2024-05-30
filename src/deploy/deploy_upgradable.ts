@@ -5,7 +5,7 @@ require("dotenv").config();
 async function main () {
     const Lottery = await ethers.getContractFactory("Lottery");
     const lottery = await upgrades.deployProxy(Lottery, [
-        8 * 3600
+        17 * 3600
     ]);
     
     await lottery.deployed();
