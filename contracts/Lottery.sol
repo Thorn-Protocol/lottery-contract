@@ -75,10 +75,10 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             20,
             50 * 10 ** 18,
             0,
-            22 * 3600,
-            0,
-            24 * 3600,
-            22 * 3600
+            5 * 3600,
+            4 * 3600,
+            1 * 3600,
+            1 * 3600
         );
         uint dayStart = block.timestamp - (block.timestamp % 86400);
         dayStart += startTime;
@@ -176,10 +176,9 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint mod = ticketCountByRound[round];
         uint numberRewardsOfRound = lotto.numberRewardsOfRound;
 
-        require(
-            ticketCountByRound[round] > numberRewardsOfRound,
-            "Not enough tickets to roll"
-        );
+        if (ticketCountByRound[round] < lotto.numberRewardsOfRound) {
+            numberRewardsOfRound = ticketCountByRound[round];
+        }
 
         uint[] memory luckyNumbers = new uint[](numberRewardsOfRound);
         uint8 count = 0;
@@ -256,6 +255,11 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         }
         emit setLotteryEvent(lotto, msg.sender);
     }
+
+    function changeRoundTimestamp(uint round, RoundTimestamp memory _info) public onlyAdmin {
+        roundTimestamp[round] = _info;
+    }
+
 
     function getHash(
         address userAddress,

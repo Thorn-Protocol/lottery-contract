@@ -8,7 +8,7 @@ const deploy: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const result = await deploy("Lottery", {
     from: deployer,
     args: [
-      17 * 3600
+      2 * 3600
     ],
     log: true,
     // deterministicDeployment: true,
