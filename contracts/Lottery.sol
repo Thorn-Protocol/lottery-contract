@@ -43,6 +43,7 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     mapping(uint => RoundTimestamp) public roundTimestamp;
     mapping(address => uint[]) public userLuckyNumber;
+    mapping(address => mapping (uint => LuckyTicket)) public userLuckyTicketsByRound;
     mapping(uint => LuckyTicket) public dailyTickets;
     mapping(uint => uint) ticketCountByRound;
     mapping(uint => LuckyTicket[]) public roundReward;
@@ -328,6 +329,7 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         );
         dailyTickets[luckyNumber] = ticket;
         userLuckyNumber[userAddress].push(luckyNumber);
+        userLuckyTicketsByRound[userAddress][round] = ticket;
 
         emit eventClaimDailyTicket(
             userAddress,
@@ -367,12 +369,10 @@ contract Lottery is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         address userAddress
     ) public view returns (LuckyTicket[] memory) {
         LuckyTicket[] memory result = new LuckyTicket[](
-            userLuckyNumber[userAddress].length
+            lotto.currentRound
         );
-        for (uint i = 0; i < userLuckyNumber[userAddress].length; i++) {
-            result[i] = dailyTickets[
-                userLuckyNumber[userAddress][i]
-            ];
+        for (uint i = 0; i < lotto.currentRound; i++) {
+            result[i] = userLuckyTicketsByRound[userAddress][i];
         }
         return result;
     }
